@@ -1,0 +1,24 @@
+{
+  "name": "fish.js.org",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start:game": "parcel src/index.html -p 8000",
+    "start:static": "httpster",
+    "start": "run-p start:*",
+    "build": "parcel build src/index.html --out-dir dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "httpster": "^1.2.0",
+    "npm-run-all": "^4.1.5",
+    "parcel": "^2.0.0-beta.2",
+    "phaser": "^3.54.0",
+    "svgo": "^2.3.0",
+    "typescript": "^4.2.4"
+  }
+}
