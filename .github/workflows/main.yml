@@ -28,6 +28,7 @@ jobs:
           pnpm format -- --check
           pnpm test
           pnpm build
+          mv public dist/
       - name: gh-pages
         run: |
           set -ex
