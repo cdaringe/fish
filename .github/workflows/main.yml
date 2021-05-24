@@ -1,0 +1,38 @@
+# @info
+# main & pull_request jobs cannot de-dupe their workflow configuration :(
+# https://github.community/t5/GitHub-Actions/Start-a-workflow-from-another-workflow/td-p/37586
+name: main
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # https://github.com/JamesIves/github-pages-deploy-action#getting-started-airplane
+      - name: checkout 🛎️
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v1.4.4
+        with:
+          node-version: "v14.16.1"
+          registry-url: "https://registry.npmjs.org"
+      - name: Install pnpm
+        run: npm install -g pnpm@5
+      - name: Install and Test
+        run: |
+          pnpm install
+          pnpm format -- --check
+          pnpm test
+          pnpm build
+      - name: gh-pages
+        run: |
+          set -ex
+          NODE_DEBUG=gh-pages \
+          GH_TOKEN=${{ secrets.GH_TOKEN }} \
+          node \
+            -r perish \
+            -e "require('gh-pages').publish('dist', { repo: 'https://' + process.env.GH_TOKEN + '@github.com/cdaringe/fish.js.org.git', user: { name: 'cdaringe', email: 'cdaringe@nope.com' } })"
