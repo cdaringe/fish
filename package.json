@@ -7,7 +7,7 @@
     "start:game": "parcel src/index.html -p 8000",
     "start:static": "httpster",
     "start": "run-p start:*",
-    "build": "parcel build src/index.html",
+    "build": "parcel build src/index.html --public-url '/fish.js.org'",
     "test": "echo wee"
   },
   "keywords": [],
