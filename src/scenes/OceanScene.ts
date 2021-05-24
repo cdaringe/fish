@@ -1,12 +1,22 @@
 // https://codepen.io/yaluye/pen/yzrXbR
 import Phaser from "phaser";
 
+enum SpriteTypes {
+  Fish,
+  Hook,
+}
+const FISH_VARIANTS = ["a", "b"] as const;
+
 export default class OceanScene extends Phaser.Scene {
   public fishies: Phaser.Types.Physics.Arcade.ImageWithDynamicBody[] = [];
   public hookedFish: Phaser.Types.Physics.Arcade.ImageWithDynamicBody | null =
     null;
   private _hook: Phaser.Types.Physics.Arcade.ImageWithDynamicBody | null = null;
   private hookup: Phaser.Physics.Arcade.Group | null = null;
+  private flipXBySprite: WeakMap<
+    Phaser.Types.Physics.Arcade.ImageWithDynamicBody,
+    boolean
+  > = new WeakMap();
 
   constructor() {
     super("ocean");
@@ -18,13 +28,16 @@ export default class OceanScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("fishy_b", "public/fishy_a.svg");
+    FISH_VARIANTS.forEach(([v]) => {
+      this.load.image(`fishy_${v}`, `public/fishy_${v}.svg`);
+    });
     this.load.image("bubble", "public/bubbleo.svg");
     this.load.image("hook", "public/hook.svg");
   }
 
   create() {
     this.fishies = [...Array(5)].map((_, i) => {
+      const fishVariant = FISH_VARIANTS[i % FISH_VARIANTS.length][0];
       const particles = this.add.particles("bubble");
       const emitters = [
         particles.createEmitter({
@@ -42,20 +55,22 @@ export default class OceanScene extends Phaser.Scene {
           gravityY: -350,
         }),
       ];
-
-      const fish = this.physics.add.image(50 * i, 50 * i, "fishy_b");
+      const fish = this.physics.add.image(
+        50 * i,
+        50 * i,
+        `fishy_${fishVariant}`
+      );
+      this.flipXBySprite.set(fish, fishVariant === "a");
       fish.setBounce(0.35, 0.35);
       fish.setCollideWorldBounds(true);
+      // start bubbling at a random time, follow the fish
       emitters.forEach((em) => {
         em.stop();
-        setTimeout(() => {
-          em.start();
-        }, Math.random() * 2_000);
+        setTimeout(() => em.start(), Math.random() * 2_000);
         em.startFollow(fish);
       });
       fish.setVelocity(Math.random() * 100 - 50, Math.random() * 100 - 50);
       fish.body.setMaxVelocity(150, 150);
-      fish.setBounce(1, 1);
       (fish as any).emitters = emitters;
       return fish;
     });
@@ -68,6 +83,17 @@ export default class OceanScene extends Phaser.Scene {
     hook.setVelocity(Math.random() * 500 - 50, Math.random() * 500 - 50);
     this._hook = hook;
 
+    this.fishies.reduce(
+      (acc, fish) => {
+        const next = acc.filter((f) => f !== fish);
+        next.forEach((f) => {
+          this.physics.add.collider(fish, f);
+        });
+        return next;
+      },
+      [...this.fishies]
+    );
+    // add hook collider
     this.fishies.forEach((fish) => {
       this.physics.add.collider(fish, hook, () => {
         if (this.hookedFish) return;
@@ -78,33 +104,33 @@ export default class OceanScene extends Phaser.Scene {
     });
   }
   update() {
-    const sprites = [
-      ...this.fishies.map((fish) => [fish, "fish"] as const),
-      [this.hook, "hook"] as const,
+    const spriteMetas = [
+      ...this.fishies.map((fish) => [fish, SpriteTypes.Fish] as const),
+      [this.hook, SpriteTypes.Hook] as const,
     ];
-    for (const [sprite, type] of sprites) {
-      if (sprite === this.hookedFish || !sprite.body) {
-        continue;
-      } else {
-        const hookedFish = this.hookedFish;
-        if (hookedFish) {
-          hookedFish.setVelocity(0, 0);
-          this.hookup?.setVelocityY(-400);
-          const { x, y } = this.hook.body.position;
-          hookedFish.setPosition(x, y);
-          if (y <= 0) {
-            this.fishies = this.fishies.filter((fish) => fish !== hookedFish);
-            (
-              (hookedFish as any)
-                .emitters as Phaser.GameObjects.Particles.ParticleEmitter[]
-            ).forEach((emitter) => emitter.remove());
-            hookedFish.destroy();
-            this.hookup?.clear();
-            this.hook.setCollideWorldBounds();
-            this.hookup = null;
-            this.hookedFish = null;
-            this.hook.setVelocityY(100);
-          }
+    for (const [sprite, type] of spriteMetas) {
+      if (sprite === this.hookedFish || !sprite.body) continue;
+      const hookedFish = this.hookedFish;
+      if (hookedFish) {
+        hookedFish.body.checkCollision.none = true;
+        this.hook.body.checkCollision.none = true;
+        hookedFish.setVelocity(0, 0);
+        this.hookup?.setVelocityY(-400);
+        const { x, y } = this.hook.body.position;
+        hookedFish.setPosition(x, y);
+        if (y <= 0) {
+          this.fishies = this.fishies.filter((fish) => fish !== hookedFish);
+          (
+            (hookedFish as any)
+              .emitters as Phaser.GameObjects.Particles.ParticleEmitter[]
+          ).forEach((emitter) => emitter.remove());
+          hookedFish.destroy();
+          this.hookup?.clear();
+          this.hook.setCollideWorldBounds();
+          this.hookup = null;
+          this.hookedFish = null;
+          this.hook.setVelocityY(100);
+          this.hook.body.checkCollision.none = false;
         }
       }
       const isOnCeiling = sprite.body.onCeiling();
@@ -122,6 +148,10 @@ export default class OceanScene extends Phaser.Scene {
       } else {
         sprite.body.setAccelerationY(y + dir * rand * 10);
       }
+      const isFlipX = this.flipXBySprite.get(sprite)!;
+      sprite.flipX =
+        type === SpriteTypes.Fish &&
+        (sprite.body.velocity.x >= 0 ? isFlipX : !isFlipX);
     }
   }
 }
