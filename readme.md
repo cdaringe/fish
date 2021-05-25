@@ -1,8 +1,8 @@
 # fish.js.org
 
-swim, little fishies. don't get caught!
+swim, little fishies.
 
-fish.js.org is a phaserjs game, where fish get hooked and reeled in!
+fish.js.org is a [phaser](http://phaser.io/) game, where fish get hooked and reeled in!
 
 ## usage
 
