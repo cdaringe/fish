@@ -1,6 +1,9 @@
 body {
+  padding: 0;
+  margin: 0;
+
   background-color: #30457c;
-  padding: 20px 0;
+  /* padding: 20px 0; */
   animation: wave 3s infinite alternate;
 }
 
@@ -12,56 +15,6 @@ body {
     background-color: #21315b;
   }
 }
-
-/* #fish1 {
-  animation: swim 15s linear infinite, swimv 8s ease infinite alternate;
-  position: relative;
-  left: 120%;
-  padding: 50px;
-}
-
-#fish3 {
-  animation: swim3 15s 2s linear infinite, swimv 8s 2s ease infinite alternate;
-  position: relative;
-  left: -100%;
-  padding: 80px;
-}
-
-@keyframes swim {
-  0% {
-    left: 110%;
-  }
-  100% {
-    left: -20%;
-  }
-}
-
-@keyframes swim3 {
-  0% {
-    left: -40%;
-  }
-  100% {
-    left: 110%;
-  }
-}
-
-@keyframes swimv {
-  0% {
-    transform: translateY(0);
-  }
-  25% {
-    transform: translateY(30px);
-  }
-  50% {
-    transform: translateY(0px);
-  }
-  75% {
-    transform: translateY(50px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
-} */
 
 #bubble-1 {
   animation: bubble 5s infinite;
